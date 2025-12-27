@@ -42,59 +42,29 @@ export default function Navbar() {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-8">
-            <a
-              href="/#home"
-              onClick={(e) => {
-                e.preventDefault()
-                if (window.location.pathname !== '/') {
-                  window.location.href = '/#home'
-                } else {
-                  document.getElementById('home')?.scrollIntoView({ behavior: 'smooth' })
-                }
-              }}
-              className="text-gray-700 hover:text-primary-600 font-medium transition-colors cursor-pointer"
-            >
-              Beranda
-            </a>
-            <a
-              href="/#events"
-              onClick={(e) => {
-                e.preventDefault()
-                if (window.location.pathname !== '/') {
-                  window.location.href = '/#events'
-                } else {
-                  document.getElementById('events')?.scrollIntoView({ behavior: 'smooth' })
-                }
-              }}
-              className="text-gray-700 hover:text-primary-600 font-medium transition-colors cursor-pointer"
-            >
-              Acara
-            </a>
-            <a
-              href="/#documentation"
-              onClick={(e) => {
-                e.preventDefault()
-                if (window.location.pathname !== '/') {
-                  window.location.href = '/#documentation'
-                } else {
-                  document.getElementById('documentation')?.scrollIntoView({ behavior: 'smooth' })
-                }
-              }}
-              className="text-gray-700 hover:text-primary-600 font-medium transition-colors cursor-pointer"
-            >
-              Dokumentasi
-            </a>
             <Link
-              href="/tree"
+              href="/"
               className="text-gray-700 hover:text-primary-600 font-medium transition-colors"
             >
-              Pohon Keluarga
+              Beranda
+            </Link>
+            <Link
+              href="/events"
+              className="text-gray-700 hover:text-primary-600 font-medium transition-colors"
+            >
+              Acara
             </Link>
             <Link
               href="/documentation"
               className="text-gray-700 hover:text-primary-600 font-medium transition-colors"
             >
-              Galeri
+              Dokumentasi
+            </Link>
+            <Link
+              href="/tree"
+              className="text-gray-700 hover:text-primary-600 font-medium transition-colors"
+            >
+              Pohon Keluarga
             </Link>
             {user ? (
               <div className="flex items-center space-x-4">
@@ -147,64 +117,33 @@ export default function Navbar() {
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
           <div className="md:hidden py-4 space-y-4 border-t border-gray-200">
-            <a
-              href="/#home"
-              onClick={(e) => {
-                e.preventDefault()
-                setIsMobileMenuOpen(false)
-                if (window.location.pathname !== '/') {
-                  window.location.href = '/#home'
-                } else {
-                  document.getElementById('home')?.scrollIntoView({ behavior: 'smooth' })
-                }
-              }}
-              className="block text-gray-700 hover:text-primary-600 font-medium cursor-pointer"
-            >
-              Beranda
-            </a>
-            <a
-              href="/#events"
-              onClick={(e) => {
-                e.preventDefault()
-                setIsMobileMenuOpen(false)
-                if (window.location.pathname !== '/') {
-                  window.location.href = '/#events'
-                } else {
-                  document.getElementById('events')?.scrollIntoView({ behavior: 'smooth' })
-                }
-              }}
-              className="block text-gray-700 hover:text-primary-600 font-medium cursor-pointer"
-            >
-              Acara
-            </a>
-            <a
-              href="/#documentation"
-              onClick={(e) => {
-                e.preventDefault()
-                setIsMobileMenuOpen(false)
-                if (window.location.pathname !== '/') {
-                  window.location.href = '/#documentation'
-                } else {
-                  document.getElementById('documentation')?.scrollIntoView({ behavior: 'smooth' })
-                }
-              }}
-              className="block text-gray-700 hover:text-primary-600 font-medium cursor-pointer"
-            >
-              Dokumentasi
-            </a>
             <Link
-              href="/tree"
+              href="/"
               onClick={() => setIsMobileMenuOpen(false)}
               className="block text-gray-700 hover:text-primary-600 font-medium"
             >
-              Pohon Keluarga
+              Beranda
+            </Link>
+            <Link
+              href="/events"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="block text-gray-700 hover:text-primary-600 font-medium"
+            >
+              Acara
             </Link>
             <Link
               href="/documentation"
               onClick={() => setIsMobileMenuOpen(false)}
               className="block text-gray-700 hover:text-primary-600 font-medium"
             >
-              Galeri
+              Dokumentasi
+            </Link>
+            <Link
+              href="/tree"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="block text-gray-700 hover:text-primary-600 font-medium"
+            >
+              Pohon Keluarga
             </Link>
             {user ? (
               <div className="pt-4 border-t border-gray-200 space-y-2">

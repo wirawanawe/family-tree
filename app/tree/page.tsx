@@ -197,9 +197,9 @@ export default function TreePage() {
           {/* Header */}
           <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-                <h1 className="text-4xl font-bold text-gray-800 mb-2">
-                  🌳 Pohon Keluarga
+              <div className="flex-1 pr-4">
+                <h1 className="text-4xl font-bold text-gray-800 mb-2 break-words">
+                  🌳 Pohon Keluarga{user?.family_name ? ` - ${user.family_name}` : ''}
                 </h1>
                 <p className="text-gray-600">
                   Visualisasikan dan kelola hubungan keluarga Anda

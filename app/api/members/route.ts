@@ -31,6 +31,98 @@ const normalizeDate = (value: any) => {
   return null;
 };
 
+// Helper function to calculate birthday date for current year based on birth_date
+function calculateBirthdayThisYear(birthDate: string | null): string | null {
+  if (!birthDate) return null;
+  
+  try {
+    const birth = new Date(birthDate);
+    if (isNaN(birth.getTime())) return null;
+    
+    const currentYear = new Date().getFullYear();
+    const birthdayThisYear = new Date(currentYear, birth.getMonth(), birth.getDate());
+    
+    // Format as YYYY-MM-DD
+    const year = birthdayThisYear.getFullYear();
+    const month = String(birthdayThisYear.getMonth() + 1).padStart(2, '0');
+    const day = String(birthdayThisYear.getDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+  } catch (error) {
+    return null;
+  }
+}
+
+// Helper function to create birthday event automatically
+async function createBirthdayEvent(
+  memberId: number,
+  memberName: string,
+  birthDate: string | null,
+  familyId: number,
+  createdBy: number | null
+): Promise<void> {
+  if (!birthDate) return;
+  
+  // Normalize birth_date format (handle various formats)
+  let normalizedBirthDate = birthDate;
+  if (typeof birthDate === 'string') {
+    normalizedBirthDate = birthDate.split('T')[0].split(' ')[0];
+  }
+  
+  const birthdayThisYear = calculateBirthdayThisYear(normalizedBirthDate);
+  if (!birthdayThisYear) return;
+  
+  try {
+    // Check if birthday event already exists for this member this year
+    const [existing]: any = await pool.query(
+      `SELECT id FROM family_events 
+       WHERE family_id = ? 
+       AND (
+         (title = ? AND event_date = ?)
+         OR (title LIKE ? AND event_date = ?)
+       )`,
+      [
+        familyId,
+        `Ulang Tahun ${memberName}`,
+        birthdayThisYear,
+        `%Ulang Tahun ${memberName}%`,
+        birthdayThisYear
+      ]
+    );
+    
+    // If event already exists, skip creation
+    if (Array.isArray(existing) && existing.length > 0) {
+      return;
+    }
+    
+    // Calculate age
+    const birth = new Date(normalizedBirthDate);
+    if (isNaN(birth.getTime())) return;
+    
+    const today = new Date();
+    const age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    const dayDiff = today.getDate() - birth.getDate();
+    const actualAge = (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) ? age - 1 : age;
+    
+    // Create birthday event
+    await pool.query(
+      `INSERT INTO family_events 
+       (family_id, title, description, event_date, created_by)
+       VALUES (?, ?, ?, ?, ?)`,
+      [
+        familyId,
+        `Ulang Tahun ${memberName}`,
+        `Ulang tahun ke-${actualAge + 1} ${memberName}`,
+        birthdayThisYear,
+        createdBy,
+      ]
+    );
+  } catch (error) {
+    console.error('Error creating birthday event:', error);
+  }
+}
+
 type CloneMeta = {
   originFamilyId?: number;
   originMemberId?: number;
@@ -404,6 +496,17 @@ export async function POST(request: NextRequest) {
       changed_by: session.id,
       new_values: newMember[0] as any,
     });
+
+    // Create birthday event if birth_date is provided
+    if (birth_date) {
+      await createBirthdayEvent(
+        result.insertId,
+        name,
+        normalizeDate(birth_date),
+        session.family_id,
+        session.id
+      );
+    }
 
     return NextResponse.json(newMember[0], { status: 201 });
   } catch (error: any) {

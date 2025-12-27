@@ -193,14 +193,11 @@ export default function EventsPage() {
 
   const getEventsForDate = (date: Date) => {
     const dateStr = formatDateLocal(date)
-    // Normalize event_date from database (might be Date object or string)
+    // Normalize event_date from database (always string per interface)
     const normalizedEvents = events.filter((e) => {
-      let eventDateStr = e.event_date
-      // If event_date is a Date object, convert it
-      if (eventDateStr instanceof Date) {
-        eventDateStr = formatDateLocal(eventDateStr)
-      } else if (typeof eventDateStr === 'string') {
-        // If it's a string, extract just the date part (YYYY-MM-DD)
+      let eventDateStr: string = e.event_date
+      // Extract just the date part (YYYY-MM-DD) if it's a string
+      if (typeof eventDateStr === 'string') {
         eventDateStr = eventDateStr.split('T')[0].split(' ')[0]
       }
       // Compare normalized dates
@@ -235,14 +232,14 @@ export default function EventsPage() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 pt-16 p-4 md:p-8">
-        <div className="max-w-7xl mx-auto">
+      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 pt-16">
+        <div className="max-w-7xl mx-auto p-4 md:p-8">
           {/* Header */}
           <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <h1 className="text-4xl font-bold text-gray-800 mb-2">
-                  📅 Acara Keluarga
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div className="flex-1 pr-4">
+              <h1 className="text-4xl font-bold text-gray-800 mb-2 break-words">
+                  📅 Acara Keluarga{user?.family_name ? ` - ${user.family_name}` : ''}
                 </h1>
                 <p className="text-gray-600">
                   Kelola dan lihat acara keluarga yang akan datang

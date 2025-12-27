@@ -85,22 +85,25 @@ export default function AdminPage() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-4xl font-bold text-gray-800 mb-2">
-                👥 User Approvals
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="flex-1 pr-4">
+              <h1 className="text-4xl font-bold text-gray-800 mb-2 break-words">
+                👥 User Approvals{user?.family_name ? ` - ${user.family_name}` : ''}
               </h1>
               <p className="text-gray-600">
                 Approve atau reject pendaftaran pengguna yang menunggu
               </p>
             </div>
-            <button
-              onClick={() => router.push('/')}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
-            >
-              ← Kembali
-            </button>
+            <div className="flex gap-2 flex-wrap">
+              <button
+                onClick={() => router.push('/')}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
+              >
+                ← Kembali
+              </button>
+            </div>
           </div>
+        </div>
         </div>
 
         {/* Pending Users */}

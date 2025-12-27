@@ -127,12 +127,16 @@ export default function ProfilePage() {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-            <h1 className="text-4xl font-bold text-gray-800 mb-2">
-              👤 Profile
-            </h1>
-            <p className="text-gray-600">
-              Kelola informasi profil dan keamanan akun Anda
-            </p>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div className="flex-1 pr-4">
+                <h1 className="text-4xl font-bold text-gray-800 mb-2 break-words">
+                  👤 Profile{user?.family_name ? ` - ${user.family_name}` : ''}
+                </h1>
+                <p className="text-gray-600">
+                  Kelola informasi profil dan keamanan akun Anda
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Tabs */}

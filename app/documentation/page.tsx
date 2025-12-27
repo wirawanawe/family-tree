@@ -156,27 +156,29 @@ export default function DocumentationPage() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 pt-16 p-4 md:p-8">
-        <div className="max-w-7xl mx-auto">
+      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 pt-16">
+        <div className="max-w-7xl mx-auto p-4 md:p-8">
           {/* Header */}
           <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-                <h1 className="text-4xl font-bold text-gray-800 mb-2">
-                  📸 Dokumentasi Keluarga
+              <div className="flex-1 pr-4">
+                <h1 className="text-4xl font-bold text-gray-800 mb-2 break-words">
+                  📸 Dokumentasi Keluarga{user?.family_name ? ` - ${user.family_name}` : ''}
                 </h1>
                 <p className="text-gray-600">
                   Galeri foto dan video acara keluarga
                 </p>
               </div>
-              {canManage && (
-                <button
-                  onClick={handleOpenUploadForm}
-                  className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-lg"
-                >
-                  + Upload Dokumentasi
-                </button>
-              )}
+              <div className="flex gap-2 flex-wrap">
+                {canManage && (
+                  <button
+                    onClick={handleOpenUploadForm}
+                    className="px-6 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors shadow-md"
+                  >
+                    + Upload Dokumentasi
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Filter */}
@@ -199,7 +201,7 @@ export default function DocumentationPage() {
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
               >
-                📷 Foto
+                Foto
               </button>
               <button
                 onClick={() => setFilterType('video')}
@@ -209,7 +211,7 @@ export default function DocumentationPage() {
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
               >
-                🎥 Video
+                Video
               </button>
             </div>
           </div>

@@ -32,6 +32,179 @@ const normalizeDate = (value: any) => {
   return null;
 };
 
+// Helper function to calculate birthday date for a specific year based on birth_date
+function calculateBirthdayForYear(birthDate: string | Date | null, year: number): string | null {
+  if (!birthDate) return null;
+  
+  try {
+    let month: string;
+    let day: string;
+    
+    // Handle Date object from MySQL
+    if (birthDate instanceof Date) {
+      // Use local date components to avoid timezone issues
+      month = String(birthDate.getMonth() + 1).padStart(2, '0');
+      day = String(birthDate.getDate()).padStart(2, '0');
+    } else if (typeof birthDate === 'string') {
+      // Parse date string directly to avoid timezone issues
+      // Expected format: YYYY-MM-DD
+      let dateStr = birthDate.split('T')[0].split(' ')[0];
+      const dateMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!dateMatch) return null;
+      [, , month, day] = dateMatch;
+    } else {
+      return null;
+    }
+    
+    // Format as YYYY-MM-DD directly, avoiding Date object timezone issues
+    return `${year}-${month}-${day}`;
+  } catch (error) {
+    return null;
+  }
+}
+
+// Helper function to delete all birthday events for a member (by old name)
+async function deleteBirthdayEvents(familyId: number, oldMemberName: string): Promise<void> {
+  try {
+    await pool.query(
+      `DELETE FROM family_events 
+       WHERE family_id = ? 
+       AND title LIKE ?`,
+      [familyId, `%Ulang Tahun ${oldMemberName}%`]
+    );
+    console.log(`[Birthday Event] Deleted old birthday events for ${oldMemberName}`);
+  } catch (error) {
+    console.error(`[Birthday Event] Error deleting birthday events for ${oldMemberName}:`, error);
+  }
+}
+
+// Helper function to create birthday event automatically for a specific year
+async function createBirthdayEvent(
+  memberId: number,
+  memberName: string,
+  birthDate: string | Date | null,
+  familyId: number,
+  createdBy: number | null,
+  targetYear: number
+): Promise<void> {
+  if (!birthDate) {
+    console.log(`[Birthday Event] Skipping - no birth_date for member ${memberId}`);
+    return;
+  }
+  
+  const birthdayDate = calculateBirthdayForYear(birthDate, targetYear);
+  if (!birthdayDate) {
+    console.log(`[Birthday Event] Skipping - invalid birth_date format: ${birthDate} for member ${memberId}`);
+    return;
+  }
+  
+  try {
+    // Check if birthday event already exists for this member on this specific date
+    const [existing]: any = await pool.query(
+      `SELECT id FROM family_events 
+       WHERE family_id = ? 
+       AND (
+         (title = ? AND event_date = ?)
+         OR (title LIKE ? AND event_date = ?)
+       )`,
+      [
+        familyId,
+        `Ulang Tahun ${memberName}`,
+        birthdayDate,
+        `%Ulang Tahun ${memberName}%`,
+        birthdayDate
+      ]
+    );
+    
+    // If event already exists, skip creation
+    if (Array.isArray(existing) && existing.length > 0) {
+      console.log(`[Birthday Event] Already exists for ${memberName} on ${birthdayDate}`);
+      return;
+    }
+    
+    // Calculate age for the target year - extract year from birth_date
+    let birthYear: number;
+    if (birthDate instanceof Date) {
+      birthYear = birthDate.getFullYear();
+    } else if (typeof birthDate === 'string') {
+      const dateStr = birthDate.split('T')[0].split(' ')[0];
+      const dateMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!dateMatch) {
+        console.log(`[Birthday Event] Invalid date format: ${birthDate}`);
+        return;
+      }
+      birthYear = parseInt(dateMatch[1], 10);
+    } else {
+      console.log(`[Birthday Event] Invalid date type: ${typeof birthDate}`);
+      return;
+    }
+    
+    const ageForYear = targetYear - birthYear;
+    
+    // Create birthday event
+    const [result]: any = await pool.query(
+      `INSERT INTO family_events 
+       (family_id, title, description, event_date, created_by)
+       VALUES (?, ?, ?, ?, ?)`,
+      [
+        familyId,
+        `Ulang Tahun ${memberName}`,
+        `Ulang tahun ke-${ageForYear} ${memberName}`,
+        birthdayDate,
+        createdBy,
+      ]
+    );
+    
+    console.log(`[Birthday Event] Created for ${memberName} on ${birthdayDate} (age ${ageForYear})`);
+  } catch (error) {
+    console.error(`[Birthday Event] Error creating birthday event for ${memberName}:`, error);
+  }
+}
+
+// Sync birthday events for a specific member - creates events for multiple years
+async function syncMemberBirthdayEvents(
+  memberId: number,
+  memberName: string,
+  birthDate: string | Date | null,
+  familyId: number,
+  createdBy: number | null,
+  oldMemberName?: string
+): Promise<void> {
+  try {
+    // Always delete old birthday events (with old name) when member is updated
+    if (oldMemberName) {
+      await deleteBirthdayEvents(familyId, oldMemberName);
+    }
+    
+    // If birth_date is removed, also delete events with new name
+    if (!birthDate) {
+      await deleteBirthdayEvents(familyId, memberName);
+      console.log(`[Sync Birthday] No birth_date for member ${memberId}, deleted all birthday events`);
+      return;
+    }
+    
+    const currentYear = new Date().getFullYear();
+    const yearsToCreate = 10; // Create events for 10 years ahead
+    
+    // Create birthday events for multiple years
+    for (let yearOffset = 0; yearOffset < yearsToCreate; yearOffset++) {
+      const targetYear = currentYear + yearOffset;
+      await createBirthdayEvent(
+        memberId,
+        memberName,
+        birthDate,
+        familyId,
+        createdBy,
+        targetYear
+      );
+    }
+    
+    console.log(`[Sync Birthday] Completed syncing birthday events for ${memberName}`);
+  } catch (error) {
+    console.error('[Sync Birthday] Error syncing birthday events:', error);
+  }
+}
+
 type CloneMeta = {
   originFamilyId?: number;
   originMemberId?: number;
@@ -454,6 +627,19 @@ export async function PUT(
         new_values: newValues,
       });
     }
+
+    // Sync birthday events when member is updated
+    // This will delete old events and create new ones for 10 years ahead
+    // Always sync to handle name changes, birth_date changes, or birth_date removal
+    const oldMemberName = oldMember.name;
+    await syncMemberBirthdayEvents(
+      parseInt(params.id),
+      name,
+      normalizeDate(birth_date),
+      session.family_id,
+      null, // Use null for system-generated events
+      oldMemberName
+    );
 
     return NextResponse.json(updated[0]);
   } catch (error: any) {
